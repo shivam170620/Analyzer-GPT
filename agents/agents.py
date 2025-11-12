@@ -9,6 +9,7 @@ from autogen_core import CancellationToken
 from autogen_core.code_executor import CodeBlock
 import asyncio
 from dotenv import load_dotenv
+from prompts import data_analyst_system_prompt
 
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -19,14 +20,11 @@ model_client = OpenAIChatCompletionClient(
     api_key=OPENAI_API_KEY,
 )
 
-# define both agent here datanalyst_agent and code exceutor agent and we have to first ready the code executor agent
-# 
-
 root_dir = Path(__file__).resolve().parent.parent
 work_dir = root_dir / "docker_executor_workdir"
 work_dir.mkdir(exist_ok=True, parents=True)
 
-async def code_executor_agent():
+async def code_executor_agent(code_block):
     async with DockerCommandLineCodeExecutor(
         image="python:3.10",
         work_dir=work_dir,
@@ -34,7 +32,7 @@ async def code_executor_agent():
     ) as executor:
         result = await executor.execute_code_blocks(
             code_blocks=[
-                CodeBlock(language="python", code="print('Hello, World!')"),
+                CodeBlock(language="python", code=code_block),
             ],
             cancellation_token=CancellationToken(),
         )
@@ -43,17 +41,19 @@ async def code_executor_agent():
 
 asyncio.run(code_executor_agent())
 
-# async def data_analyst_agent():
-#     console = Console()
-#     data_analyst_agent = AssistantAgent(
-#         name="Data Analyst Agent",
-#         model_client=model_client,
-#         system_message=StructuredMessage(
-#             content=DATA_ANALYST_AGENT_SYSTEM_PROMPT
-#         ),
-#         ui=console,
-#     )
+async def data_analysis_agent():
+    assistant_agent = AssistantAgent(
+        name="DataAnalysisAgent",
+        model_client=model_client,
+        ui=Console(),
+        system_message=data_analyst_system_prompt,
+    )
 
-#     await data_analyst_agent.start_interaction_loop(
-#         cancellation_token=CancellationToken(),
-#     )
+    user_query = "Please analyze the file and provide insights on sales trends of last 3 years."
+
+    initial_message = StructuredMessage.from_text(user_query)
+
+    response = await assistant_agent.run(initial_message)
+
+    print("Assistant Response:")
+    print(response.content)
