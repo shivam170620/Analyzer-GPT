@@ -1,0 +1,8 @@
+autogen-ext[openai]
+autogen-ext
+autogen-core
+autogen-agentchat
+autogen-ext[docker]
+python-dotenv
+
+
