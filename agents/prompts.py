@@ -32,7 +32,8 @@ Step 4: Code Generation Rules
 - The entire code must be in one block only, with no multiple or split code sections.
 
 Example:
-```python 
+```
+python 
 your-code-here
 ```
 
